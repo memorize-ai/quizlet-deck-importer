@@ -80,11 +80,11 @@ const importDeck = async (deckId: string, topics: string[], name: string, imageU
 }
 
 const importCards = (deckId: string, terms: PageDataTerm[]) => {
-	// TODO: Import cards
+	
 }
 
 const uploadDeckImage = (deckId: string, url: string, completion?: (error?: Error) => void) =>
-	uploadAsset(url, id => `deck-assets/${deckId}/${id}`, completion)
+	uploadAsset(url, () => `decks/${deckId}`, completion)
 
 const uploadAsset = (
 	url: string,
@@ -97,10 +97,9 @@ const uploadAsset = (
 		throw new Error('Unknown content type')
 	
 	const token = uuid()
-	const { id } = firestore.collection('quizlet-assets').doc()
-	const rawPath = path(id)
+	const rawPath = path(firestore.collection('quizlet-assets').doc().id)
 	
-	;(async () => {
+	;(async () => { // Immediately return the URL, but upload in the background
 		try {
 			const { data } = await axios.get(normalizeUrl(url), { responseType: 'blob' })
 			
