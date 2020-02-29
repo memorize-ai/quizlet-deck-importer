@@ -1,10 +1,11 @@
 import axios from 'axios'
+import * as _ from 'lodash'
 import * as mime from 'mime'
 import { v4 as uuid } from 'uuid'
 import Batch from 'firestore-batch'
 import { Converter } from 'showdown'
 
-import { ACCOUNT_ID, MAX_NUMBER_OF_CARDS_IN_SECTION } from './constants'
+import { ACCOUNT_ID, MAX_NUMBER_OF_CARDS_IN_SECTION, ASSET_CHUNK_SIZE } from './constants'
 import { storageUrl } from './helpers'
 import admin, { firestore, storage } from './firebase-admin'
 
@@ -127,8 +128,41 @@ const importCards = async (deckId: string, terms: PageDataTerm[]) => {
 	console.log(' DONE')
 }
 
-const uploadAssets = () => {
-	// TODO: Upload assets
+const uploadAssets = async () => {
+	const chunked = _.chunk(assets, ASSET_CHUNK_SIZE)
+	let i = 0
+	
+	for (const chunk of chunked) {
+		const message = `Uploading asset chunk ${++i}/${chunked.length}... `
+		
+		process.stdout.write(`${message}0/${chunk.length}\r`)
+		
+		let j = 0
+		
+		await Promise.all(chunk.map(async ({ destination, url, contentType, token }) => {
+			try {
+				const { data } = await axios.get(url, { responseType: 'blob' })
+				
+				await storage.file(destination).save(data, {
+					public: true,
+					metadata: {
+						contentType,
+						owner: ACCOUNT_ID,
+						metadata: {
+							firebaseStorageDownloadTokens: token
+						}
+					}
+				})
+				
+				process.stdout.write(`${message}${++j}/${chunk.length}\r`)
+			} catch (error) {
+				console.error(`Error uploading asset: ${error}`)
+				j++
+			}
+		}))
+		
+		console.log()
+	}
 }
 
 const getCardSides = (
