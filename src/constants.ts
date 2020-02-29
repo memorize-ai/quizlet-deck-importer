@@ -9,7 +9,7 @@ export const TOPICS_PATH = join(__dirname, '../products/topics.json')
 
 export const FIREBASE_ADMIN_KEY_PATH = join(__dirname, `../protected/firebase-admin${DEBUG ? '-dev' : ''}.json`)
 
-export const ASSET_CHUNK_SIZE = 500
+export const ASSET_CHUNK_SIZE = 200
 export const MAX_NUMBER_OF_CARDS_IN_SECTION = 50
 
 export const DEFAULT_STORAGE_BUCKET = `memorize-ai${DEBUG ? '-dev' : ''}.appspot.com`
