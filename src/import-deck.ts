@@ -31,7 +31,7 @@ const PAGE_DATA_REGEX = /\(function\(\)\{window\.Quizlet\["setPageData"\] = (.+?
 
 const converter = new Converter
 
-const assets: {
+let assets: {
 	destination: string
 	url: string
 	contentType: string
@@ -39,6 +39,8 @@ const assets: {
 }[] = []
 
 export default async (deckId: string, extension: string, topics: string[]) => {
+	assets = []
+	
 	process.stdout.write('Retrieving page data...')
 	const { name, imageUrl, terms } = await getPageData(deckId, extension)
 	console.log(' DONE')

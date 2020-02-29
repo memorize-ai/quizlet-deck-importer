@@ -3,4 +3,5 @@
 node_modules/
 lib/
 protected/**
+playground/**
 !**/.gitkeep
