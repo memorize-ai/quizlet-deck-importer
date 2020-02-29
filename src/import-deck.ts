@@ -211,6 +211,9 @@ const markdownToHtml = (markdown: string) => {
 }
 
 const getAssetUrl = (url: string, destination: string | ((id: string) => string)) => {
+	if (url.startsWith('/tts/'))
+		return null
+	
 	console.log(`Getting asset url for ${url = normalizeUrl(url)}`)
 	
 	const contentType = getContentType(url)
