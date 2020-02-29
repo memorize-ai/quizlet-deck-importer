@@ -144,7 +144,7 @@ const uploadAssets = async () => {
 		
 		await Promise.all(chunk.map(async ({ destination, url, contentType, token }) => {
 			try {
-				const { data } = await axios.get(url, { responseType: 'blob' })
+				const { data } = await axios.get(url, { responseType: 'arraybuffer' })
 				
 				await storage.file(destination).save(data, {
 					public: true,
@@ -204,10 +204,14 @@ const markdownToHtml = (markdown: string) => {
 }
 
 const getAssetUrl = (url: string, destination: string | ((id: string) => string)) => {
+	console.log(`Getting asset url for ${url = normalizeUrl(url)}`)
+	
 	const contentType = getContentType(url)
 	
 	if (!contentType)
 		throw new Error('Unknown content type')
+	
+	console.log(`Found content type: ${contentType}`)
 	
 	const token = uuid()
 	const rawDestination = typeof destination === 'string'
@@ -216,12 +220,15 @@ const getAssetUrl = (url: string, destination: string | ((id: string) => string)
 	
 	assets.push({
 		destination: rawDestination,
-		url: normalizeUrl(url),
+		url,
 		contentType,
 		token
 	})
 	
-	return storageUrl(rawDestination.split('/'), token)
+	const newUrl = storageUrl(rawDestination.split('/'), token)
+	console.log(`Found storage url: ${newUrl}`)
+	
+	return newUrl
 }
 
 const normalizeUrl = (url: string) =>
