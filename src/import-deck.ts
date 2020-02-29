@@ -78,7 +78,8 @@ const importDeck = async (deckId: string, topics: string[], name: string, imageU
 		favoriteCount: 0,
 		creator: ACCOUNT_ID,
 		created: admin.firestore.FieldValue.serverTimestamp(),
-		updated: admin.firestore.FieldValue.serverTimestamp()
+		updated: admin.firestore.FieldValue.serverTimestamp(),
+		source: 'quizlet'
 	})
 	
 	return imageUrl
