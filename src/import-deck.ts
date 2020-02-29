@@ -46,7 +46,14 @@ export default async (deckId: string, extension: string, topics: string[]) => {
 	console.log(' DONE')
 	
 	process.stdout.write('Importing deck...')
-	await importDeck(deckId, topics, name, imageUrl)
+	
+	try {
+		await importDeck(deckId, topics, name, imageUrl)
+	} catch (error) {
+		console.error(`Error importing deck: ${error}`)
+		return deckId
+	}
+	
 	console.log(' DONE')
 	
 	await importCards(deckId, terms)
