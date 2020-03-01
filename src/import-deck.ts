@@ -3,6 +3,7 @@ import * as _ from 'lodash'
 import * as mime from 'mime'
 import { v4 as uuid } from 'uuid'
 import Batch from 'firestore-batch'
+import { AllHtmlEntities as Entities } from 'html-entities'
 
 import { ACCOUNT_ID, MAX_NUMBER_OF_CARDS_IN_SECTION, ASSET_CHUNK_SIZE } from './constants'
 import { storageUrl } from './helpers'
@@ -27,6 +28,8 @@ interface PageData {
 }
 
 const PAGE_DATA_REGEX = /\(function\(\)\{window\.Quizlet\["setPageData"\] = (.+?); QLoad\("Quizlet\.setPageData"\);\}\)\.call\(this\);\(function\(\)\{var script = document\.querySelector\("#.+?"\);script\.parentNode\.removeChild\(script\);\}\)\(\);<\/script>/
+
+const entities = new Entities
 
 let assets: {
 	destination: string
@@ -201,7 +204,8 @@ const getCardSides = (
 }
 
 const richTextToHtml = (text: string) =>
-	text
+	entities.encode(text)
+		.replace(/\\n/g, '<br>')
 		.replace(/\/(.+?)\//g, '<i>$1</i>')
 		.replace(/\*(.+?)\*/g, '<strong>$1</strong>')
 		.replace(/_(.+?)_/g, '<u>$1</u>')
