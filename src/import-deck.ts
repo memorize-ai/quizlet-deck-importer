@@ -206,9 +206,7 @@ const getCardSides = (
 const richTextToHtml = (text: string) =>
 	entities.encode(text)
 		.replace(/\\n/g, '<br>')
-		.replace(/\/(.+?)\//g, '<i>$1</i>')
 		.replace(/\*(.+?)\*/g, '<strong>$1</strong>')
-		.replace(/_(.+?)_/g, '<u>$1</u>')
 
 const getAssetUrl = (url: string, destination: string | ((id: string) => string)) => {
 	if (url.startsWith('/tts/'))
