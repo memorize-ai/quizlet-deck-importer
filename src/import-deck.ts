@@ -27,16 +27,18 @@ interface PageData {
 	termIdToTermsMap: Record<string, PageDataTerm>
 }
 
-const PAGE_DATA_REGEX = /\(function\(\)\{window\.Quizlet\["setPageData"\] = (.+?); QLoad\("Quizlet\.setPageData"\);\}\)\.call\(this\);\(function\(\)\{var script = document\.querySelector\("#.+?"\);script\.parentNode\.removeChild\(script\);\}\)\(\);<\/script>/
-
-const entities = new Entities
-
-let assets: {
+interface Asset {
 	destination: string
 	url: string
 	contentType: string
 	token: string
-}[] = []
+}
+
+const PAGE_DATA_REGEX = /\(function\(\)\{window\.Quizlet\["setPageData"\] = (.+?); QLoad\("Quizlet\.setPageData"\);\}\)\.call\(this\);\(function\(\)\{var script = document\.querySelector\("#.+?"\);script\.parentNode\.removeChild\(script\);\}\)\(\);<\/script>/
+
+const entities = new Entities
+
+let assets: Asset[] = []
 
 export default async (deckId: string, extension: string, topics: string[]) => {
 	assets = []
