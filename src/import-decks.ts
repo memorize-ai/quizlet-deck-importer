@@ -20,8 +20,21 @@ export default async () => {
 		try {
 			await importDeck(deckId, deckData.extension, deckData.topics)
 		} catch (error) {
-			console.error(error)
-			continue
+			console.error(`Error importing deck with ID ${deckId}: ${error}`)
+			switch (error.code) {
+				case 'deck-already-exists':
+					console.log('The deck already exists, marking it as imported...')
+					break
+				case 'page-data-unavailable':
+					console.log('Moving on to the next deck...')
+					continue
+				case 'page-data-bad-request':
+					console.log('This set does not exist or some other error occurred when fetching the page data. Marking it as imported...')
+					break
+				default:
+					console.log('An unknown error occurred, moving on the the next deck...')
+					continue
+			}
 		}
 		
 		deckData.imported = true

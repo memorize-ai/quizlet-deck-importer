@@ -6,7 +6,7 @@ import Batch from 'firestore-batch'
 import { AllHtmlEntities as Entities } from 'html-entities'
 
 import { ACCOUNT_ID, MAX_NUMBER_OF_CARDS_IN_SECTION, ASSET_CHUNK_SIZE } from './constants'
-import { storageUrl } from './helpers'
+import { errorWithCode, storageUrl } from './helpers'
 import admin, { firestore, storage } from './firebase-admin'
 
 interface PageDataTerm {
@@ -48,14 +48,18 @@ export default async (deckId: string, extension: string, topics: string[]) => {
 	console.log(' DONE')
 	
 	process.stdout.write('Importing deck...')
-	
 	try {
 		await importDeck(deckId, topics, name, imageUrl)
 	} catch (error) {
-		console.error(`Error importing deck: ${error}`)
-		return deckId
+		console.error(error)
+		
+		throw error.code === 6
+			? errorWithCode(
+				`The deck with ID ${deckId} already exists`,
+				'deck-already-exists'
+			)
+			: error
 	}
-	
 	console.log(' DONE')
 	
 	await importCards(deckId, terms)
@@ -65,7 +69,7 @@ export default async (deckId: string, extension: string, topics: string[]) => {
 	return deckId
 }
 
-const importDeck = async (deckId: string, topics: string[], name: string, imageUrl: string | null) => {
+const importDeck = (deckId: string, topics: string[], name: string, imageUrl: string | null) => {
 	const createDeck = firestore.doc(`decks/${deckId}`).create({
 		topics,
 		hasImage: Boolean(imageUrl),
@@ -123,9 +127,18 @@ const importCards = async (deckId: string, terms: PageDataTerm[]) => {
 			...getCardSides({
 				front: term.word,
 				back: term.definition,
-				imageUrl: term._imageUrl && getAssetUrl(term._imageUrl, id => `deck-assets/${deckId}/${id}`),
-				frontAudioUrl: term._wordAudioUrl && getAssetUrl(term._wordAudioUrl, id => `deck-assets/${deckId}/${id}`),
-				backAudioUrl: term._definitionAudioUrl && getAssetUrl(term._definitionAudioUrl, id => `deck-assets/${deckId}/${id}`)
+				imageUrl: term._imageUrl && getAssetUrl(
+					term._imageUrl,
+					id => `deck-assets/${deckId}/${id}`
+				),
+				frontAudioUrl: term._wordAudioUrl && getAssetUrl(
+					term._wordAudioUrl,
+					id => `deck-assets/${deckId}/${id}`
+				),
+				backAudioUrl: term._definitionAudioUrl && getAssetUrl(
+					term._definitionAudioUrl,
+					id => `deck-assets/${deckId}/${id}`
+				)
 			}),
 			viewCount: 0,
 			reviewCount: 0,
@@ -168,8 +181,7 @@ const uploadAssets = async () => {
 				
 				process.stdout.write(`${message}${++j}/${chunk.length}\r`)
 			} catch (error) {
-				console.error(`Error uploading asset: ${error}`)
-				j++
+				console.error(`Error uploading asset ${++j}/${chunk.length}: ${error}`)
 			}
 		}))
 		
@@ -219,7 +231,10 @@ const getAssetUrl = (url: string, destination: string | ((id: string) => string)
 	const contentType = getContentType(url)
 	
 	if (!contentType)
-		throw new Error('Unknown content type')
+		throw errorWithCode(
+			'Unknown content type',
+			'unknown-content-type'
+		)
 	
 	console.log(`Found content type: ${contentType}`)
 	
@@ -250,23 +265,37 @@ const getContentType = (url: string) =>
 	mime.getType(url.split('?')[0])
 
 const getPageData = async (deckId: string, extension: string) => {
-	const rawPageData: string | undefined = (
-		(await axios.get(`https://quizlet.com/${deckId}/${extension}/`)).data.match(PAGE_DATA_REGEX) || []
-	)[1]
-	
-	if (!rawPageData)
-		throw new Error(`Unable to get the page data for the deck with ID ${deckId}`)
-	
-	const {
-		set: { title, _thumbnailUrl },
-		originalOrder: order,
-		termIdToTermsMap: termsMap
-	}: PageData = JSON.parse(rawPageData)
-	
-	return {
-		name: title,
-		imageUrl: _thumbnailUrl,
-		terms: order.map(id => termsMap[id])
+	try {
+		const rawPageData: string | undefined = (
+			(await axios.get(`https://quizlet.com/${deckId}/${extension}/`)).data.match(PAGE_DATA_REGEX) ?? []
+		)[1]
+		
+		if (!rawPageData)
+			throw errorWithCode(
+				`Unable to get the page data for the deck with ID ${deckId}`,
+				'page-data-unavailable'
+			)
+		
+		const {
+			set: { title, _thumbnailUrl },
+			originalOrder: order,
+			termIdToTermsMap: termsMap
+		}: PageData = JSON.parse(rawPageData)
+		
+		return {
+			name: title,
+			imageUrl: _thumbnailUrl,
+			terms: order.map(id => termsMap[id])
+		}
+	} catch (error) {
+		if (error.code === 'page-data-unavailable')
+			throw error
+		
+		console.error(error)
+		throw errorWithCode(
+			`Bad request to retrieve the page data for the deck with ID ${deckId}`,
+			'page-data-bad-request'
+		)
 	}
 }
 
