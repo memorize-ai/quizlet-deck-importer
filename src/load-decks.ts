@@ -29,14 +29,12 @@ export default async (topics: Record<string, string[]> = loadTopics(require(TOPI
 				(await axios.get(`https://quizlet.com/subject/${name}/?page=${page}`)).data,
 				topicIds
 			)
+			writeFile(DECKS_PATH, JSON.stringify(decks))
 			
 			process.stdout.write(`${message}${page}/${pageCount}\r`)
 		}
 		
 		delete topics[name]
-		
-		writeFile(DECKS_PATH, JSON.stringify(decks))
-		
 		console.log()
 	}
 	
