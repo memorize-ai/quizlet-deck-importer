@@ -6,6 +6,9 @@ export const errorWithCode = (message: string, code: string) => {
 	return error
 }
 
+export const sleep = (milliseconds: number): Promise<void> =>
+	new Promise(resolve => setTimeout(resolve, milliseconds))
+
 export interface Match {
 	match: string
 	captures: string[]
