@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+npm run build || exit 1
+
+node lib "$@" --max-old-space-size=24576
