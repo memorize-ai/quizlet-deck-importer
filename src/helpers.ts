@@ -28,3 +28,11 @@ export const matchAll = (string: string, regex: RegExp) =>
 
 export const storageUrl = (pathComponents: string[], token: string) =>
 	`https://firebasestorage.googleapis.com/v0/b/${DEFAULT_STORAGE_BUCKET}/o/${pathComponents.join('%2F')}?alt=media&token=${token}`
+
+export const slugify = (string: string, delimiter: string = '-') =>
+	(string
+		.replace(/[\s\:\/\?#@\[\]\-_!\$&'\(\)\*\+\.\,;=]+/g, ' ')
+		.trim()
+		.replace(/\s+/g, delimiter)
+		.toLowerCase()
+	) || delimiter.repeat(string.length)

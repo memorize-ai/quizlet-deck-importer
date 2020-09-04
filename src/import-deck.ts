@@ -2,11 +2,12 @@ import axios from 'axios'
 import * as _ from 'lodash'
 import * as mime from 'mime'
 import { v4 as uuid } from 'uuid'
+import { nanoid } from 'nanoid'
 import Batch from 'firestore-batch'
 import { AllHtmlEntities as Entities } from 'html-entities'
 
 import { ACCOUNT_ID, MAX_NUMBER_OF_CARDS_IN_SECTION, ASSET_CHUNK_SIZE } from './constants'
-import { errorWithCode, storageUrl } from './helpers'
+import { errorWithCode, storageUrl, slugify } from './helpers'
 import admin, { firestore, storage } from './firebase-admin'
 
 interface PageDataTerm {
@@ -71,6 +72,8 @@ export default async (deckId: string, extension: string, topics: string[]) => {
 
 const importDeck = (deckId: string, topics: string[], name: string, imageUrl: string | null) => {
 	const createDeck = firestore.doc(`decks/${deckId}`).create({
+		slugId: nanoid(10),
+		slug: slugify(name),
 		topics,
 		hasImage: Boolean(imageUrl),
 		name,
@@ -94,7 +97,8 @@ const importDeck = (deckId: string, topics: string[], name: string, imageUrl: st
 		creator: ACCOUNT_ID,
 		created: admin.firestore.FieldValue.serverTimestamp(),
 		updated: admin.firestore.FieldValue.serverTimestamp(),
-		source: 'quizlet'
+		source: 'quizlet',
+		originalId: deckId
 	})
 	
 	return imageUrl
